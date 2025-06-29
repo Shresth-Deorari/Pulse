@@ -19,10 +19,10 @@ void memParser(char *input, memStats *stats) {
         stats->swapFree = value;
     }
   }
-  /*printf("\nTotal Memory: %lu\nFree Memory: %lu\nTotal Swap Space: %lu\nFree "
+  printf("\nTotal Memory: %lu\nFree Memory: %lu\nTotal Swap Space: %lu\nFree "
          "Swap Space: %lu\n",
          stats->memTotal, stats->memAvailable, stats->swapTotal,
-         stats->swapFree); */
+         stats->swapFree);
 }
 
 void cpuParser(char *input, cpuStat *cpuStatsPointer) {
@@ -37,8 +37,8 @@ void cpuParser(char *input, cpuStat *cpuStatsPointer) {
     fprintf(stderr, "Failed to parse cpu stats\n");
     return;
   }
-  /*printf("cpu %lu %lu %lu %lu %lu %lu %lu\n", stats->user, stats->nice,
-         stats->system, stats->idle, stats->iowait, stats->irq, stats->softirq);*/
+  printf("cpu %lu %lu %lu %lu %lu %lu %lu\n", stats->user, stats->nice,
+         stats->system, stats->idle, stats->iowait, stats->irq, stats->softirq);
   stats++;
   while ((token = strtok_r(input, "\n", &input))) {
     int core;
@@ -50,9 +50,9 @@ void cpuParser(char *input, cpuStat *cpuStatsPointer) {
       fprintf(stderr, "Failed to parse cpu stats\n");
       return;
     }
-    /*printf("cpu%d %lu %lu %lu %lu %lu %lu %lu\n", core, stats->user,
+    printf("cpu%d %lu %lu %lu %lu %lu %lu %lu\n", core, stats->user,
            stats->nice, stats->system, stats->idle, stats->iowait, stats->irq,
-           stats->softirq);*/
+           stats->softirq);
     stats++;
     if (core == 15)
       break;
@@ -69,6 +69,6 @@ void pidParser(char *input, pidStats *stats) {
     fprintf(stderr, "Failed to parse file completly\n");
     return;
   }
-  /*printf("%d \n%s \n%c \n%lu \n%lu \n%ld \n%ld\n", stats->pid, stats->comm,
-         stats->state, stats->utime, stats->stime, stats->vsize, stats->rss);*/
+  printf("%d \n%s \n%c \n%lu \n%lu \n%ld \n%ld\n", stats->pid, stats->comm,
+         stats->state, stats->utime, stats->stime, stats->vsize, stats->rss);
 }
