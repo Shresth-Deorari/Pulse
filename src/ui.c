@@ -185,12 +185,8 @@ void draw_mem_panel(const memStats *mem_info) {
 
   unsigned long mem_used =
       mem_info->memTotal > 0 ? mem_info->memTotal - mem_info->memAvailable : 0;
-  double mem_percent =
-      mem_info->memTotal > 0 ? 100.0 * mem_used / mem_info->memTotal : 0.0;
   unsigned long swap_used =
       mem_info->swapTotal > 0 ? mem_info->swapTotal - mem_info->swapFree : 0;
-  double swap_percent =
-      mem_info->swapTotal > 0 ? 100.0 * swap_used / mem_info->swapTotal : 0.0;
 
   char mem_used_str[16], mem_total_str[16], swap_used_str[16],
       swap_total_str[16];
@@ -201,10 +197,10 @@ void draw_mem_panel(const memStats *mem_info) {
                      mem_info->swapTotal);
 
   char mem_display_str[64], swap_display_str[64];
-  snprintf(mem_display_str, sizeof(mem_display_str), "Mem: %s/%s (%.1f%%)",
-           mem_used_str, mem_total_str, mem_percent);
-  snprintf(swap_display_str, sizeof(swap_display_str), "Swap: %s/%s (%.1f%%)",
-           swap_used_str, swap_total_str, swap_percent);
+  snprintf(mem_display_str, sizeof(mem_display_str), "Mem: %s/%s", mem_used_str,
+           mem_total_str);
+  snprintf(swap_display_str, sizeof(swap_display_str), "Swap: %s/%s",
+           swap_used_str, swap_total_str);
 
   mvwprintw(mem_win, 1, 2, mem_display_str);
   mvwprintw(mem_win, 1, 4 + strlen(mem_display_str), swap_display_str);
@@ -220,9 +216,9 @@ void draw_process_panel(const ProcessInfo *processes, int num_processes) {
     return;
 
   wattron(proc_win, COLOR_PAIR(PROC_HEADER_PAIR));
-  mvwprintw(proc_win, 1, 1, "%-6s %-20s %-5s %-6s %-6s %-8s %-8s", "PID",
-            "COMMAND", "S", "CPU%", "MEM%", "VIRT", "RES");
-  for (int x = 70; x < width - 1; ++x)
+  mvwprintw(proc_win, 1, 1, "%-6s %-20s %-5s %-6s %-8s %-8s", "PID", "COMMAND",
+            "S", "CPU%", "VIRT", "RES");
+  for (int x = 62; x < width - 1; ++x)
     mvwaddch(proc_win, 1, x, ' ');
   wattroff(proc_win, COLOR_PAIR(PROC_HEADER_PAIR));
 
@@ -237,9 +233,9 @@ void draw_process_panel(const ProcessInfo *processes, int num_processes) {
     format_memory_unit(virt_str, sizeof(virt_str), p->stats.vsize / 1024);
     format_memory_unit(res_str, sizeof(res_str), p->stats.rss * 4);
 
-    mvwprintw(proc_win, i + 2, 1, "%-6d %-20s %-5c %-6.1f %-6.1f %-8s %-8s",
-              p->stats.pid, cmd, p->stats.state, p->cpu_percent, p->mem_percent,
-              virt_str, res_str);
+    mvwprintw(proc_win, i + 2, 1, "%-6d %-20s %-5c %-6.1f %-8s %-8s",
+              p->stats.pid, cmd, p->stats.state, p->cpu_percent, virt_str,
+              res_str);
   }
 
   int max_scroll = num_processes - drawable_height;
