@@ -5,17 +5,13 @@
 
 **A lightweight, responsive terminal-based Linux resource monitor written in C with ncurses.**
 
----
-
 ## 🚀 Overview
 
 Pulse reads directly from `/proc` to display real‑time CPU, memory, and process statistics in a smooth, multi‑threaded TUI. Designed for minimal overhead and maximum clarity.
 
 <p align="center">
-  <img src="docs/pulse-demo.gif" alt="Pulse in action" width="600"/>
+  <img src="assets/Pulse.gif" alt="Pulse in action" width="600"/>
 </p>
-
----
 
 ## 🔍 Features
 
@@ -29,8 +25,6 @@ Pulse reads directly from `/proc` to display real‑time CPU, memory, and proces
   Producer‑consumer model keeps UI at ~30 FPS under load.  
 - **Adaptive Layout**  
   Auto‑wraps to any terminal size and CPU count.  
-
----
 
 ## 🎯 Motivation
 
@@ -46,8 +40,6 @@ Moving beyond “hello world,” Pulse is a deep dive into:
   pthreads + mutexes to decouple data collection from rendering.  
 - **Performance Tuning**  
   Optimized from O(n²) matching to O(n log n) sorting.
-
----
 
 ## 🏗️ Architecture
 
@@ -70,48 +62,37 @@ Moving beyond “hello world,” Pulse is a deep dive into:
 └───────────────────────────┘
 ```
 
-
----
-
 ## ⚙️ Requirements
 
-- GCC (or compatible C compiler)  
+- `GCC` (or compatible C compiler)  
 - `make`  
-- ncurses development headers  
-- pthreads (usually bundled)
+- `ncurses` development headers  
+- `pthreads` (usually bundled)
 
----
 
 ## 🛠️ Build & Run
 
-<!-- ```bash -->
+```bash
 git clone https://github.com/you/pulse.git  
 cd pulse
+sudo pacman -S ncurses
+make all
+make run
 
-# Debian/Ubuntu
-sudo apt-get update  
-sudo apt-get install build-essential libncurses-dev
-
-# Fedora/CentOS/RHEL
-sudo dnf install @development-tools ncurses-devel
-
-make  
-./pulse
-<!-- ``` -->
-
----
+``` 
 
 ## ⌨️ Controls
 
-| Key / Input   | Action                            |
-| ------------- | --------------------------------- |
-| `q`           | Quit                              |
-| `c`           | Sort processes by CPU ↓           |
-| `p`           | Sort processes by PID ↑           |
-| ↑ / ↓         | Scroll process list               |
-| Mouse wheel   | Scroll process list               |
+| Key / Input | Action                          |
+|-------------|----------------------------------|
+| `q`         | Quit the application             |
+| `c`         | Sort processes by CPU usage ↓    |
+| `p`         | Sort processes by Process ID ↑   |
+| ↑ / ↓       | Scroll the process list          |
+| Mouse Wheel | Scroll the process list          |
 
----
+
+
 
 ## 🧩 Development Journey
 
@@ -126,16 +107,16 @@ make
    - Swapped O(n²) matching for `qsort`/`bsearch` (O(n log n))  
    - Eliminated redundant allocations for steady 30 FPS
 
----
+
 
 ## 📈 Roadmap
 
 - [ ] `k` key to kill selected process  
-- [ ] `/` search/filter by name  
+- [ ] Implement a `/`-based fuzzy search to filter the process list by name or PID. 
 - [ ] Network & disk I/O panels  
-- [ ] Config file for colors & refresh rate  
+- [ ] Load user preferences (e.g., color themes, refresh interval) via a `.pulse.conf` file.
+- [ ] Add Email Alerts via SMTP
 
----
 
 ## 📄 License
 
