@@ -1,4 +1,3 @@
-// src/main.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +5,7 @@
 #include <fcntl.h>
 #include <dirent.h>
 #include <ctype.h>
-#include <pthread.h> // For threading
+#include <pthread.h>
 
 #include "../include/parser.h"
 #include "../include/calculate.h"
@@ -16,13 +15,11 @@
 #define MAX_CPU_ENTRIES 33
 #define MAX_PROCESSES 1024
 
-// --- Struct definitions ---
 typedef struct {
     pidStats* items;
     int count;
 } ProcessList;
 
-// FIX: A new struct to hold all data shared between threads
 typedef struct {
     double cpu_usage[MAX_CPU_ENTRIES];
     memStats mem_info;
@@ -31,30 +28,22 @@ typedef struct {
     int num_processes;
 } SharedData;
 
-// --- Global variables for threading ---
 static SharedData shared_data;
 static pthread_mutex_t data_mutex;
-static volatile int running = 1; // volatile tells the compiler this can change unexpectedly
+static volatile int running = 1;
 
-// --- Function Prototypes ---
 char *read_file_dynamically(const char *path);
 ProcessList get_all_processes(void);
 void* data_collector_thread(void* arg);
 
-
-// ====================================================================
-// The main function is now the UI THREAD
-// ====================================================================
 int main() {
     pthread_t data_thread_id;
 
-    // Initialize mutex
     if (pthread_mutex_init(&data_mutex, NULL) != 0) {
         fprintf(stderr, "Mutex init failed\n");
         return 1;
     }
 
-    // Create the data collector thread
     if (pthread_create(&data_thread_id, NULL, data_collector_thread, NULL) != 0) {
         fprintf(stderr, "Thread creation failed\n");
         return 1;
@@ -62,46 +51,36 @@ int main() {
 
     ui_init();
 
-    // --- The UI Loop ---
     while (running) {
-        // Handle input immediately
         int ch = getch();
         if (ch == 'q' || ch == 'Q') {
-            running = 0; // Signal the other thread to stop
+            running = 0;
             continue;
         } else if (ch != ERR) {
-            // No need to lock for this, as ui_handle_input only changes its own state
             ui_handle_input(ch, shared_data.num_processes);
         }
 
-        // Create a local copy of data to draw, to minimize time holding the lock
         SharedData local_data_copy;
         pthread_mutex_lock(&data_mutex);
         local_data_copy = shared_data;
         pthread_mutex_unlock(&data_mutex);
 
-        // Draw using the local copy
         ui_draw(local_data_copy.cpu_usage, &local_data_copy.mem_info, 
                 local_data_copy.num_total_cpu_entries, 
                 local_data_copy.processed_list, local_data_copy.num_processes);
         
-        usleep(33000); // ~30 frames per second
+        usleep(33000); // ~30 FPS
     }
 
-    // --- Cleanup ---
-    pthread_join(data_thread_id, NULL); // Wait for the data thread to finish
+    pthread_join(data_thread_id, NULL);
     pthread_mutex_destroy(&data_mutex);
     ui_cleanup();
     return 0;
 }
 
-// ====================================================================
-// This function is the DATA COLLECTOR THREAD
-// ====================================================================
 void* data_collector_thread(void* arg) {
-    (void)arg; // Unused
+    (void)arg;
     
-    // Initialization for this thread
     cpuStat prevCpuStats[MAX_CPU_ENTRIES] = {0}, currCpuStats[MAX_CPU_ENTRIES] = {0};
     ProcessList prev_procs = { .items = NULL, .count = 0 };
     int num_cpu_entries = 0;
@@ -113,9 +92,7 @@ void* data_collector_thread(void* arg) {
     }
     prev_procs = get_all_processes();
 
-    // The data collection loop
     while (running) {
-        // Do all the heavy work...
         SharedData current_data;
         current_data.num_total_cpu_entries = num_cpu_entries;
 
@@ -128,8 +105,6 @@ void* data_collector_thread(void* arg) {
             cpuUsage(prevCpuStats, currCpuStats, current_data.cpu_usage, num_cpu_entries);
         }
         if (mem_data) {
-            // FIX 1: Replaced the stray character with a proper ampersand '&'
-            // FIX 2: Corrected the typo from 't_data' to 'current_data'
             memParser(mem_data, &current_data.mem_info);
             free(mem_data);
         }
@@ -144,6 +119,8 @@ void* data_collector_thread(void* arg) {
         for (int i = 0; i < curr_procs.count; ++i) {
             current_data.processed_list[i].stats = curr_procs.items[i];
             current_data.processed_list[i].cpu_percent = 0.0;
+            
+            // Note: O(n*m) process lookup to calculate CPU delta
             for (int j = 0; j < prev_procs.count; ++j) {
                 if (curr_procs.items[i].pid == prev_procs.items[j].pid) {
                     unsigned long long proc_time_delta = (curr_procs.items[i].utime + curr_procs.items[i].stime) - (prev_procs.items[j].utime + prev_procs.items[j].stime);
@@ -159,12 +136,10 @@ void* data_collector_thread(void* arg) {
         }
         current_data.num_processes = curr_procs.count;
         
-        // Lock the mutex and copy the fresh data to the shared area
         pthread_mutex_lock(&data_mutex);
         shared_data = current_data;
         pthread_mutex_unlock(&data_mutex);
 
-        // Update state for the next iteration
         if (cpu_data) {
             updateCpuState(prevCpuStats, currCpuStats, num_cpu_entries);
             free(cpu_data);
@@ -172,80 +147,75 @@ void* data_collector_thread(void* arg) {
         free(prev_procs.items);
         prev_procs = curr_procs;
         
-        sleep(1); // Refresh data once per second
+        sleep(1);
     }
     
-    free(prev_procs.items); // Final cleanup for this thread
+    free(prev_procs.items);
     return NULL;
 }
 
-// --- Helper Functions (unchanged) ---
-// ... get_all_processes() and read_file_dynamically() are exactly the same as before ...
-
 ProcessList get_all_processes() {
-  DIR *proc_dir = opendir("/proc");
-  if (!proc_dir)
-    return (ProcessList){.items = NULL, .count = 0};
+    DIR *proc_dir = opendir("/proc");
+    if (!proc_dir) return (ProcessList){.items = NULL, .count = 0};
 
-  ProcessList list = {.items = malloc(sizeof(pidStats) * MAX_PROCESSES),
-                      .count = 0};
-  if (!list.items) {
-    closedir(proc_dir);
-    return (ProcessList){.items = NULL, .count = 0};
-  }
-
-  struct dirent *entry;
-  while ((entry = readdir(proc_dir)) != NULL && list.count < MAX_PROCESSES) {
-    if (!isdigit(entry->d_name[0]))
-      continue;
-    char path[512];
-    snprintf(path, sizeof(path), "/proc/%s/stat", entry->d_name);
-    char *file_contents = read_file_dynamically(path);
-    if (file_contents) {
-      if (pidParser(file_contents, &list.items[list.count]))
-        list.count++;
-      free(file_contents);
+    ProcessList list = {.items = malloc(sizeof(pidStats) * MAX_PROCESSES), .count = 0};
+    if (!list.items) {
+        closedir(proc_dir);
+        return (ProcessList){.items = NULL, .count = 0};
     }
-  }
-  closedir(proc_dir);
-  return list;
+
+    struct dirent *entry;
+    while ((entry = readdir(proc_dir)) != NULL && list.count < MAX_PROCESSES) {
+        if (!isdigit(entry->d_name[0])) continue;
+        
+        char path[512];
+        snprintf(path, sizeof(path), "/proc/%s/stat", entry->d_name);
+        char *file_contents = read_file_dynamically(path);
+        if (file_contents) {
+            if (pidParser(file_contents, &list.items[list.count])) list.count++;
+            free(file_contents);
+        }
+    }
+    closedir(proc_dir);
+    return list;
 }
 
 char *read_file_dynamically(const char *path) {
-  int fd = open(path, O_RDONLY);
-  if (fd < 0)
-    return NULL;
-  size_t buffer_size = INITIAL_BUFFER_SIZE;
-  char *buffer = malloc(buffer_size);
-  if (!buffer) {
-    close(fd);
-    return NULL;
-  }
-  size_t total_read = 0;
-  while (1) {
-    ssize_t bytes_read =
-        read(fd, buffer + total_read, buffer_size - total_read - 1);
-    if (bytes_read > 0) {
-      total_read += bytes_read;
-    } else if (bytes_read == 0) {
-      break;
-    } else {
-      free(buffer);
-      close(fd);
-      return NULL;
-    }
-    if (total_read >= buffer_size - 1) {
-      buffer_size *= 2;
-      char *new_buffer = realloc(buffer, buffer_size);
-      if (!new_buffer) {
-        free(buffer);
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) return NULL;
+
+    size_t buffer_size = INITIAL_BUFFER_SIZE;
+    char *buffer = malloc(buffer_size);
+    if (!buffer) {
         close(fd);
         return NULL;
-      }
-      buffer = new_buffer;
     }
-  }
-  buffer[total_read] = '\0';
-  close(fd);
-  return buffer;
+
+    size_t total_read = 0;
+    while (1) {
+        ssize_t bytes_read = read(fd, buffer + total_read, buffer_size - total_read - 1);
+        if (bytes_read > 0) {
+            total_read += bytes_read;
+        } else if (bytes_read == 0) {
+            break;
+        } else {
+            free(buffer);
+            close(fd);
+            return NULL;
+        }
+
+        if (total_read >= buffer_size - 1) {
+            buffer_size *= 2;
+            char *new_buffer = realloc(buffer, buffer_size);
+            if (!new_buffer) {
+                free(buffer);
+                close(fd);
+                return NULL;
+            }
+            buffer = new_buffer;
+        }
+    }
+    buffer[total_read] = '\0';
+    close(fd);
+    return buffer;
 }
