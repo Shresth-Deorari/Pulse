@@ -27,7 +27,7 @@ typedef struct {
 
 void memParser(char *input, memStats * stats);
 
-void cpuParser(char *input, cpuStat * stats);
+int cpuParser(char *input, cpuStat * stats, int max_entries);
 
 void pidParser(char *input, pidStats * stats);
 

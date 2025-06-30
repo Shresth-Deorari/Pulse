@@ -25,38 +25,40 @@ void memParser(char *input, memStats *stats) {
          stats->swapFree); */
 }
 
-void cpuParser(char *input, cpuStat *cpuStatsPointer) {
-  cpuStat *stats = cpuStatsPointer;
-  char *token;
-  token = strtok_r(input, "\n", &input);
-  int readCount =
-      sscanf(token, " cpu %lu %lu %lu %lu %lu %lu %lu %*lu %*lu %*lu",
-             &stats->user, &stats->nice, &stats->system, &stats->idle,
-             &stats->iowait, &stats->irq, &stats->softirq);
-  if (readCount < 7) {
-    fprintf(stderr, "Failed to parse cpu stats\n");
-    return;
-  }
-  /*printf("cpu %lu %lu %lu %lu %lu %lu %lu\n", stats->user, stats->nice,
-         stats->system, stats->idle, stats->iowait, stats->irq, stats->softirq);*/
-  stats++;
-  while ((token = strtok_r(input, "\n", &input))) {
-    int core;
-    readCount =
-        sscanf(token, " cpu%d %lu %lu %lu %lu %lu %lu %lu %*lu %*lu %*lu",
-               &core, &stats->user, &stats->nice, &stats->system, &stats->idle,
-               &stats->iowait, &stats->irq, &stats->softirq);
-    if (readCount < 8) {
-      fprintf(stderr, "Failed to parse cpu stats\n");
-      return;
+int cpuParser(char *input, cpuStat *cpuStatsPointer, int max_entries) {
+  char *line = input;
+  char *next_line = NULL;
+  int count = 0;
+
+  while (line && *line != '\0' && count < max_entries) {
+    next_line = strchr(line, '\n');
+    if (next_line) {
+      *next_line = '\0';
     }
-    /*printf("cpu%d %lu %lu %lu %lu %lu %lu %lu\n", core, stats->user,
-           stats->nice, stats->system, stats->idle, stats->iowait, stats->irq,
-           stats->softirq);*/
-    stats++;
-    if (core == 15)
+
+    if (strncmp(line, "cpu", 3) == 0) {
+      cpuStat *stats = &cpuStatsPointer[count];
+      int core_id;
+
+      if (sscanf(line, " cpu %lu %lu %lu %lu %lu %lu %lu", &stats->user,
+                 &stats->nice, &stats->system, &stats->idle, &stats->iowait,
+                 &stats->irq, &stats->softirq) == 7) {
+        count++;
+      } else if (sscanf(line, " cpu%d %lu %lu %lu %lu %lu %lu %lu", &core_id,
+                        &stats->user, &stats->nice, &stats->system,
+                        &stats->idle, &stats->iowait, &stats->irq,
+                        &stats->softirq) == 8) {
+        count++;
+      }
+    }
+
+    if (next_line) {
+      line = next_line + 1;
+    } else {
       break;
+    }
   }
+  return count;
 }
 
 void pidParser(char *input, pidStats *stats) {

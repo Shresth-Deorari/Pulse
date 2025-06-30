@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g 
-LDFLAGS = -lncurses
+LDFLAGS = -lncurses -lm
 SRC = src/main.c src/parser.c src/calculate.c src/ui.c
 HEADER = include/parser.h include/calculate.h include/ui.h
 OBJ = $(SRC:.c=.o) 
