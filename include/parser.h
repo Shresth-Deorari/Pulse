@@ -25,10 +25,10 @@ typedef struct {
   long vsize, rss;
 } pidStats;
 
-void memParser(char *input, memStats * stats);
+void memParser(char *input, memStats *stats);
 
-int cpuParser(char *input, cpuStat * stats, int max_entries);
+int cpuParser(char *input, cpuStat *stats, int max_entries);
 
-int pidParser(char *input, pidStats * stats);
+int pidParser(char *input, pidStats *stats);
 
 #endif

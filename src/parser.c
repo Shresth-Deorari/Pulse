@@ -19,10 +19,6 @@ void memParser(char *input, memStats *stats) {
         stats->swapFree = value;
     }
   }
-  /*printf("\nTotal Memory: %lu\nFree Memory: %lu\nTotal Swap Space: %lu\nFree "
-         "Swap Space: %lu\n",
-         stats->memTotal, stats->memAvailable, stats->swapTotal,
-         stats->swapFree); */
 }
 
 int cpuParser(char *input, cpuStat *cpuStatsPointer, int max_entries) {
