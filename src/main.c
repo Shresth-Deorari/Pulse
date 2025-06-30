@@ -157,10 +157,8 @@ void *data_collector_thread(void *arg) {
             (curr_procs.items[i].utime + curr_procs.items[i].stime) -
             (prev_stat->utime + prev_stat->stime);
         if (total_cpu_time_delta > 0) {
-          int num_cores = num_cpu_entries > 1 ? num_cpu_entries - 1 : 1;
           current_data.processed_list[i].cpu_percent =
-              100.0 * (double)proc_time_delta * num_cores /
-              (double)total_cpu_time_delta;
+              100.0 * (double)proc_time_delta / (double)total_cpu_time_delta;
         }
       }
 
