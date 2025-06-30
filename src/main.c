@@ -14,7 +14,7 @@
 
 #define INITIAL_BUFFER_SIZE 4096
 #define MAX_CPU_ENTRIES 33
-#define MAX_PROCESSES 4096 // Increased for safety
+#define MAX_PROCESSES 4096
 
 typedef struct {
   pidStats *items;

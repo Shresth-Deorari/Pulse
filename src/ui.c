@@ -131,12 +131,17 @@ void ui_draw(const double *cpu_usage, const memStats *mem_info,
 }
 
 static void format_memory_unit(char *buf, size_t buf_size, long kb) {
-  if (kb < 1024) {
+  double val = (double)kb;
+  if (val < 1024.0) {
     snprintf(buf, buf_size, "%ldK", kb);
-  } else if (kb < 1024 * 1024) {
-    snprintf(buf, buf_size, "%.1fM", (double)kb / 1024.0);
+  } else if (val < 1024.0 * 1024.0) {
+    snprintf(buf, buf_size, "%.1fM", val / 1024.0);
+  } else if (val < 1024.0 * 1024.0 * 1024.0) {
+    snprintf(buf, buf_size, "%.1fG", val / (1024.0 * 1024.0));
+  } else if (val < 1024.0 * 1024.0 * 1024.0 * 1024.0) {
+    snprintf(buf, buf_size, "%.1fT", val / (1024.0 * 1024.0 * 1024.0));
   } else {
-    snprintf(buf, buf_size, "%.1fG", (double)kb / (1024.0 * 1024.0));
+    snprintf(buf, buf_size, "%.1fP", val / (1024.0 * 1024.0 * 1024.0 * 1024.0));
   }
 }
 
@@ -182,7 +187,6 @@ void draw_mem_panel(const memStats *mem_info) {
       mem_info->memTotal > 0 ? mem_info->memTotal - mem_info->memAvailable : 0;
   double mem_percent =
       mem_info->memTotal > 0 ? 100.0 * mem_used / mem_info->memTotal : 0.0;
-
   unsigned long swap_used =
       mem_info->swapTotal > 0 ? mem_info->swapTotal - mem_info->swapFree : 0;
   double swap_percent =
@@ -228,10 +232,8 @@ void draw_process_panel(const ProcessInfo *processes, int num_processes) {
       break;
 
     const ProcessInfo *p = &processes[proc_index];
-    char cmd[21];
+    char cmd[21], virt_str[16], res_str[16];
     snprintf(cmd, sizeof(cmd), "%.20s", p->stats.comm);
-
-    char virt_str[16], res_str[16];
     format_memory_unit(virt_str, sizeof(virt_str), p->stats.vsize / 1024);
     format_memory_unit(res_str, sizeof(res_str), p->stats.rss * 4);
 
