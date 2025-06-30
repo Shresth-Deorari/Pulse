@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall -Wextra 
 LDFLAGS = -lncurses -lm -pthread
 SRC = src/main.c src/parser.c src/calculate.c src/ui.c
 HEADER = include/parser.h include/calculate.h include/ui.h
