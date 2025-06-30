@@ -39,6 +39,30 @@ void ui_init(void) {
         init_pair(PROC_HEADER_PAIR, COLOR_BLACK, COLOR_CYAN);
         init_pair(SCROLL_THUMB_PAIR, COLOR_CYAN, COLOR_CYAN);
     }
+    ui_resize();
+}
+
+void ui_resize(void) {
+    endwin();
+    refresh();
+    clear();
+
+    if (header_win) delwin(header_win);
+    if (cpu_win) delwin(cpu_win);
+    if (mem_win) delwin(mem_win);
+    if (proc_win) delwin(proc_win);
+
+    int screen_width, screen_height;
+    getmaxyx(stdscr, screen_height, screen_width);
+
+    int dummy_cpu_rows = 4;
+    int cpu_win_height = dummy_cpu_rows + 2;
+    int proc_win_height = screen_height - HEADER_HEIGHT - cpu_win_height - MEM_PANEL_HEIGHT;
+
+    header_win = newwin(HEADER_HEIGHT, screen_width, 0, 0);
+    cpu_win = newwin(cpu_win_height, screen_width, HEADER_HEIGHT, 0);
+    mem_win = newwin(MEM_PANEL_HEIGHT, screen_width, HEADER_HEIGHT + cpu_win_height, 0);
+    proc_win = newwin(proc_win_height, screen_width, HEADER_HEIGHT + cpu_win_height + MEM_PANEL_HEIGHT, 0);
 }
 
 void ui_cleanup(void) {
@@ -81,25 +105,6 @@ void ui_handle_input(int ch, int num_processes) {
 
 void ui_draw(const double* cpu_usage, const memStats* mem_info, int num_total_cpu_entries,
              const ProcessInfo* processes, int num_processes) {
-    int screen_width, screen_height;
-    getmaxyx(stdscr, screen_height, screen_width);
-
-    int num_cpu_cols = (screen_width > 2) ? (screen_width - 2) / CPU_ITEM_FIXED_WIDTH : 1;
-    if (num_cpu_cols == 0) num_cpu_cols = 1;
-
-    int num_cpu_rows = (int)ceil((double)num_total_cpu_entries / num_cpu_cols);
-    int cpu_win_height = num_cpu_rows + 2;
-    int proc_win_height = screen_height - HEADER_HEIGHT - cpu_win_height - MEM_PANEL_HEIGHT;
-
-    if (header_win) delwin(header_win);
-    if (cpu_win) delwin(cpu_win);
-    if (mem_win) delwin(mem_win);
-    if (proc_win) delwin(proc_win);
-
-    header_win = newwin(HEADER_HEIGHT, screen_width, 0, 0);
-    cpu_win = newwin(cpu_win_height, screen_width, HEADER_HEIGHT, 0);
-    mem_win = newwin(MEM_PANEL_HEIGHT, screen_width, HEADER_HEIGHT + cpu_win_height, 0);
-    proc_win = newwin(proc_win_height, screen_width, HEADER_HEIGHT + cpu_win_height + MEM_PANEL_HEIGHT, 0);
 
     draw_header();
     draw_cpu_panel(cpu_usage, num_total_cpu_entries);
